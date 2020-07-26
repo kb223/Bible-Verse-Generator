@@ -116,11 +116,11 @@ button:active {
     margin: auto 20px;
   }
   .quote-text {
-    font-size: 2rem;
+    font-size: 1rem;
   }
 
   .fa-quote-left,
   .fa-quote-right {
-    font-size: 2rem;
+    font-size: 1rem;
   }
 }
