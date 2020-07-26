@@ -116,13 +116,13 @@ button:active {
     margin: auto 20px;
   }
   .quote-text {
-    font-size: 1rem;
+    font-size: 0.9rem;
   }
   .quote-author {
-    font-size: 0.7rem;
+    font-size: 0.8rem;
   }
   .fa-quote-left,
   .fa-quote-right {
-    font-size: 1rem;
+    font-size: 0.9rem;
   }
 }
