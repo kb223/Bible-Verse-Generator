@@ -22,7 +22,7 @@ async function getQuote() {
   const proxyUrl = "https://secure-reef-60452.herokuapp.com/";
   const apiUrl =
    // "http://www.ourmanna.com/verses/api/get?format=json&order=random";
-"https://beta.ourmanna.com/verses/api/js/"
+"https://beta.ourmanna.com/verses/api/get?format=json&order=random"
   try {
     const response = await fetch(proxyUrl + apiUrl);
     const data = await response.json();
