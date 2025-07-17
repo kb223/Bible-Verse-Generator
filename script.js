@@ -19,9 +19,9 @@ function removeLoadingSpinner() {
 // Get Quote From API
 async function getQuote() {
   showLoadingSpinner();
-  const proxyUrl = "https://secure-reef-60452.herokuapp.com/";
+  const proxyUrl = "https://udjuqgidzjzndpfwvlic.supabase.co" // old proxy "https://secure-reef-60452.herokuapp.com/";
   const apiUrl =
-   // "http://www.ourmanna.com/verses/api/get?format=json&order=random";
+   //old api "http://www.ourmanna.com/verses/api/get?format=json&order=random";
 "https://beta.ourmanna.com/verses/api/get?format=json&order=random"
   try {
     const response = await fetch(proxyUrl + apiUrl);
@@ -33,6 +33,8 @@ async function getQuote() {
       authorText.innerText = data.verse["details"].reference;
     }
 
+    //{"verse":{"details":{"text":"Do not boast about tomorrow, for you do not know what a day may bring.","reference":"Proverbs 27:1","version":"NIV","verseurl":"http://www.ourmanna.com/"},"notice":"Powered by OurManna.com"}}
+   
     //Get verse text; & reduce font size for long quotes >120 character
 
     if (data.verse["details"].text.length > 120) {
