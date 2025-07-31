@@ -77,36 +77,87 @@ function getRandomFallbackVerse() {
 async function getQuote() {
   showLoadingSpinner();
   
-  // For now, we'll use the reliable fallback verses since CORS is blocking the API
-  // This ensures users always get a verse instead of infinite loading
+  const apiUrl = 'https://beta.ourmanna.com/verses/api/get?format=json&order=random';
   
-  // Add a small delay to show the loading animation briefly
-  setTimeout(() => {
-    getRandomFallbackVerse();
-  }, 800); // Short delay to show loading spinner
-  
-  /* 
-  // Uncomment this section if you set up your own CORS proxy:
-  try {
-    const response = await fetch('YOUR_PROXY_URL_HERE');
-    const data = await response.json();
+  // Working proxies from the GitHub list and recent research
+  const proxies = [
+    // CORS.lol - Super easy, open source
+    `https://api.cors.lol/?url=${encodeURIComponent(apiUrl)}`,
     
-    if (data && data.verse && data.verse.details) {
-      const text = data.verse.details.text;
-      let reference = data.verse.details.reference;
+    // Corsfix - Reliable service
+    `https://proxy.corsfix.com/?${apiUrl}`,
+    
+    // AllOrigins - Most popular
+    `https://api.allorigins.win/get?url=${encodeURIComponent(apiUrl)}`,
+    
+    // ThingProxy - Good for HTTPS
+    `https://thingproxy.freeboard.io/fetch/${apiUrl}`,
+    
+    // Crossorigin.me (from GitHub list)
+    `https://crossorigin.me/${apiUrl}`,
+    
+    // Your original Supabase (let's try it too)
+    `https://udjuqgidzjzndpfwvlic.supabase.co${apiUrl}`
+  ];
+  
+  for (let i = 0; i < proxies.length; i++) {
+    const proxyUrl = proxies[i];
+    const proxyName = proxyUrl.split('//')[1].split('/')[0]; // Extract domain name
+    
+    try {
+      console.log(`🔄 Trying proxy ${i + 1}/${proxies.length}: ${proxyName}`);
       
-      if (!reference || reference.trim() === "") {
-        reference = "The Bible";
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 8000);
+      
+      const response = await fetch(proxyUrl, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'Origin': window.location.origin
+        },
+        signal: controller.signal
+      });
+      
+      clearTimeout(timeoutId);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
       
-      displayVerse(text, reference);
-      return;
+      let data = await response.json();
+      
+      // Handle different proxy response formats
+      if (data.contents) {
+        // AllOrigins format
+        data = JSON.parse(data.contents);
+      }
+      
+      // Check if we got valid Bible verse data
+      if (data && data.verse && data.verse.details && data.verse.details.text) {
+        const text = data.verse.details.text;
+        let reference = data.verse.details.reference || "The Bible";
+        
+        console.log(`✅ SUCCESS with ${proxyName}!`);
+        displayVerse(text, reference);
+        return;
+      } else {
+        throw new Error('Invalid response format - no verse data found');
+      }
+      
+    } catch (error) {
+      console.log(`❌ ${proxyName} failed: ${error.message}`);
+      
+      // Don't wait too long between attempts
+      if (i < proxies.length - 1) {
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
     }
-  } catch (error) {
-    console.log('API failed:', error);
-    getRandomFallbackVerse();
   }
-  */
+  
+  // If all proxies fail, use KJV fallback verses
+  console.log('🔄 All proxies failed - using KJV fallback verses');
+  getRandomFallbackVerse();
 }
 
 // Tweet quote
