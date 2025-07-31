@@ -77,34 +77,84 @@ function getRandomFallbackVerse() {
 async function getQuote() {
   showLoadingSpinner();
   
-  // Try the OurManna API first
-  try {
-    const response = await fetch('https://beta.ourmanna.com/verses/api/get?format=json&order=random');
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    
-    const data = await response.json();
-    
-    if (data && data.verse && data.verse.details) {
-      const text = data.verse.details.text;
-      let reference = data.verse.details.reference;
+  // Multiple proxy options to try
+  const proxyUrls = [
+    'https://api.allorigins.win/get?url=',
+    'https://corsproxy.io/?',
+    'https://api.codetabs.com/v1/proxy?quest='
+  ];
+  
+  const apiUrl = 'https://beta.ourmanna.com/verses/api/get?format=json&order=random';
+  
+  // Set a timeout to prevent infinite loading
+  const timeoutPromise = new Promise((_, reject) => {
+    setTimeout(() => reject(new Error('API timeout')), 10000); // 10 second timeout
+  });
+  
+  for (let proxyUrl of proxyUrls) {
+    try {
+      console.log(`Trying proxy: ${proxyUrl}`);
       
-      if (!reference || reference.trim() === "") {
-        reference = "The Bible";
+      let fetchUrl;
+      let response;
+      
+      if (proxyUrl.includes('allorigins')) {
+        // AllOrigins returns data in a different format
+        fetchUrl = proxyUrl + encodeURIComponent(apiUrl);
+        const apiPromise = fetch(fetchUrl);
+        response = await Promise.race([apiPromise, timeoutPromise]);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const proxyData = await response.json();
+        const data = JSON.parse(proxyData.contents);
+        
+        if (data && data.verse && data.verse.details) {
+          const text = data.verse.details.text;
+          let reference = data.verse.details.reference;
+          
+          if (!reference || reference.trim() === "") {
+            reference = "The Bible";
+          }
+          
+          displayVerse(text, reference);
+          return;
+        }
+      } else {
+        // Standard proxy format
+        fetchUrl = proxyUrl + encodeURIComponent(apiUrl);
+        const apiPromise = fetch(fetchUrl);
+        response = await Promise.race([apiPromise, timeoutPromise]);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        if (data && data.verse && data.verse.details) {
+          const text = data.verse.details.text;
+          let reference = data.verse.details.reference;
+          
+          if (!reference || reference.trim() === "") {
+            reference = "The Bible";
+          }
+          
+          displayVerse(text, reference);
+          return;
+        }
       }
-      
-      displayVerse(text, reference);
-      return;
-    } else {
-      throw new Error('Invalid API response format');
+    } catch (error) {
+      console.log(`Proxy ${proxyUrl} failed:`, error);
+      continue; // Try next proxy
     }
-  } catch (error) {
-    console.log('API failed, using fallback verses:', error);
-    // If API fails, use fallback verses
-    getRandomFallbackVerse();
   }
+  
+  // If all proxies fail, use fallback verses
+  console.log('All proxies failed, using fallback verses');
+  getRandomFallbackVerse();
 }
 
 // Tweet quote
